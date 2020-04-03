@@ -1,0 +1,332 @@
+---
+title: "R Notebook"
+output:
+  word_document: default
+  pdf_document:
+    latex_engine: xelatex
+  html_notebook: default
+always_allow_html: yes
+---
+
+```{r setup, include=FALSE}
+
+# This chunk shows/hides the code in your final report. When echo = TRUE, the code
+# is shown in the report. When echo = FALSE, the code is hidden from the final report.
+# We would like to see your code, so please leave the setting as is during the course.
+# This chunk will not show up in your reports, so you can safely ignore its existence.
+
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+
+The following is your first chunk to start with. Remember, you can add chunks using the menu
+above (Insert -> R) or using the keyboard shortcut Ctrl+Alt+I. A good practice is to use
+different code chunks to answer different questions. You can delete this comment if you like.
+
+Other useful keyboard shortcuts include Alt- for the assignment operator, and Ctrl+Shift+M
+for the pipe operator. You can delete these reminders if you don't want them in your report.
+
+
+```{r}
+#setwd("C:/") #Don't forget to set your working directory before you start!
+
+library("tidyverse")
+library("tidymodels")
+library("plotly")
+library("skimr")
+```
+
+```{r}
+library("lubridate")
+library("car")
+```
+
+
+```{r}
+
+dfw <-read_csv("walmartSales.csv")
+```
+```{r}
+summary(dfw)
+skim(dfw)
+```
+
+
+```{r}
+#1
+fitCPI<- lm(formula=Weekly_Sales~CPI,data=dfw)
+summary(fitCPI)
+```
+
+
+```{r}
+#2
+plot<- dfw %>% 
+  filter(Store==10) %>% 
+  ggplot(aes(x=CPI,y=Weekly_Sales))+
+  geom_point()+
+  geom_smooth(method=lm)
+
+plot
+ggplotly(plot)
+```
+```{r}
+plot<- dfw %>% 
+  filter(Store==11) %>% 
+  ggplot(aes(x=CPI,y=Weekly_Sales))+
+  geom_point()+
+  geom_smooth(method=lm)
+
+plot
+ggplotly(plot)
+```
+
+
+```{r}
+plot<- dfw %>% 
+  filter(Store==12) %>% 
+  ggplot(aes(x=CPI,y=Weekly_Sales))+
+  geom_point()+
+  geom_smooth(method=lm)
+
+plot
+ggplotly(plot)
+```
+
+```{r}
+# 2 store 13
+plot<- dfw %>% 
+  filter(Store==13) %>% 
+  ggplot(aes(x=CPI,y=Weekly_Sales))+
+  geom_point()+
+  geom_smooth(method=lm)
+
+plot
+ggplotly(plot)
+```
+
+```{r}
+#3
+plot<- dfw %>% 
+  filter(year(Date)==2012) %>% 
+  ggplot(aes(x=CPI,y=Weekly_Sales))+
+  geom_point()+
+  geom_smooth(method=lm)
+
+plot
+ggplotly(plot)
+```
+
+
+```{r}
+#4
+plot<- dfw %>% 
+  filter(year(Date)==2010,Store==1) %>% 
+  ggplot(aes(x=CPI,y=Weekly_Sales))+
+  geom_point()+
+  geom_smooth(method=lm)
+
+plot
+ggplotly(plot)
+```
+
+
+
+```{r}
+#5
+fitCPISize<- lm(formula=Weekly_Sales~CPI+Size,data=dfw)
+summary(fitCPISize)
+```
+```{r}
+anova(fitCPI, fitCPISize)
+```
+
+```{r}
+#7
+fitFull<- lm(formula=Weekly_Sales~.-Store-Date,data=dfw)
+summary(fitFull)
+```
+
+
+```{r}
+anova(fitFull, fitCPISize)
+```
+
+
+```{r}
+#8
+fitFullTemp<- lm(formula=Weekly_Sales~.-Store-Date+I(Temperature^2),data=dfw)
+summary(fitFullTemp)
+```
+
+
+```{r}
+plot<- dfw %>% 
+  ggplot(aes(x=Temperature,y=Weekly_Sales))+
+  geom_smooth(method=lm,formula=y~x+I(x^2))
+
+plot
+ggplotly(plot)
+```
+
+
+```{r}
+#9 a
+set.seed(333)
+#9b
+dfwTrain <- dfw %>% dplyr::sample_frac (0.8)
+dfwTest <-dplyr:: setdiff (dfw,dfwTrain)
+#9c
+fitOrg <-lm(formula=Weekly_Sales~.-Store-Date+I(Temperature^2),data=dfwTrain)
+summary(fitOrg)
+```
+```{r}
+tidy (fitOrg)
+```
+
+```{r}
+resultsOrg <- dfwTest %>%
+  			mutate(predictedSales = predict(fitOrg, dfwTest))
+resultsOrg
+```
+
+
+```{r}
+#9e
+performance <- metric_set(rmse, mae)
+performance(resultsOrg,truth=Weekly_Sales,estimate=predictedSales)
+```
+
+
+```{r}
+#9f
+fitOrgDate <-lm(formula=Weekly_Sales~.-Store+I(Temperature^2),data=dfwTrain)
+summary(fitOrgDate)
+```
+
+
+```{r}
+tidy(fitOrgDate)
+```
+```{r}
+resultsOrgDate <- dfwTest %>%
+  			mutate(predictedSales = predict(fitOrgDate, dfwTest))
+resultsOrg
+
+
+```
+
+
+```{r}
+performance <- metric_set(rmse, mae)
+performance(resultsOrgDate,truth=Weekly_Sales,estimate=predictedSales)
+```
+
+```{r}
+anova(fitOrg,fitOrgDate)
+```
+
+```{r}
+#9g
+fitOrgNoUn <-lm(formula=Weekly_Sales~.-Store-Date-Unemployment+I(Temperature^2),data=dfwTrain)
+summary(fitOrgNoUn)
+tidy(fitOrgNoUn)
+resultsOrgNoUn <- dfwTest %>%
+  			mutate(predictedSales = predict(fitOrgNoUn, dfwTest))
+resultsOrgNoUn
+performance(resultsOrgNoUn,truth=Weekly_Sales,estimate=predictedSales)
+```
+
+
+```{r}
+#10
+
+dfw
+
+```
+
+
+```{r}
+set.seed(333)
+fitLog <-lm(formula=log1p(Weekly_Sales)~.-Store-Date+I(Temperature^2),data=dfwTrain)
+summary(fitLog)
+tidy(fitLog)
+resultsLog <- dfwTest %>%
+  			mutate(predictedLogSales = exp(predict(fitLog, dfwTest)))
+
+resultsLog
+performance(resultsLog,truth=Weekly_Sales,estimate=predictedLogSales)
+```
+
+```{r}
+
+plot(fitLog)
+
+```
+```{r}
+plot(fitOrg)
+```
+
+
+```{r}
+#autocorrelation
+dfw %>% 
+  modelr::add_residuals(fitOrg,var="resid") %>% 
+  ggplot(aes(Date,resid))+
+  geom_line()
+
+dfw %>% 
+  modelr::add_residuals(fitLog,var="resid") %>% 
+  ggplot(aes(Date,resid))+
+  geom_line()
+```
+
+
+```{r}
+#multicollinearity
+library(car)
+car::vif(fitOrg)
+car::vif(fitLog)
+```
+
+
+```{r}
+#bonus
+dfwnew <- dfw %>% 
+  mutate(sales_sq_ft=Weekly_Sales/Size)
+dfwnew
+```
+
+
+```{r}
+set.seed(333)
+dfwNewTrain <- dfwnew %>% dplyr::sample_frac (0.8)
+dfwNewTest <-dplyr:: setdiff (dfwnew,dfwNewTrain)
+fitSalesSqFoot <- lm(formula=sales_sq_ft~.-Store-Date-Weekly_Sales+I(Temperature^2),data=dfwNewTrain)
+summary(fitSalesSqFoot)
+tidy(fitSalesSqFoot)
+```
+
+
+```{r}
+
+resultsSq <- dfwNewTest %>%
+  			mutate(predictedSqSales = predict(fitSalesSqFoot, dfwNewTest))
+resultsSq
+performance(resultsSq,truth=sales_sq_ft,estimate=predictedSqSales)
+```
+
+```{r}
+#removing size variable
+fitSalesSqFoot <- lm(formula=sales_sq_ft~.-Store-Date-Size-Weekly_Sales+I(Temperature^2),data=dfwNewTrain)
+summary(fitSalesSqFoot)
+tidy(fitSalesSqFoot)
+
+resultsSq <- dfwNewTest %>%
+  			mutate(predictedSqSales = predict(fitSalesSqFoot, dfwNewTest))
+resultsSq
+performance(resultsSq,truth=sales_sq_ft,estimate=predictedSqSales)
+```
+
+
